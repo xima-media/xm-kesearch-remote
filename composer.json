@@ -1,0 +1,26 @@
+{
+	"name": "xima/xm-kesearch-remote",
+	"description": "ke_search indexer for remote websites",
+	"type": "typo3-cms-extension",
+	"authors": [
+		{
+			"name": "Maik Schneider",
+			"email": "maik.schneider@xima.de",
+			"role": "Developer"
+		}
+	],
+	"require": {
+		"typo3/cms-core": "^11.0",
+		"tpwd/ke_search": "^4.5"
+	},
+	"extra": {
+		"typo3/cms": {
+			"extension-key": "xm_kesearch_remote"
+		}
+	},
+	"autoload": {
+		"psr-4": {
+			"Xima\\XmKesearchRemote\\": "Classes"
+		}
+	}
+}

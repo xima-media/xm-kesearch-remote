@@ -1,0 +1,22 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Xima\XmKesearchRemote\:
+    resource: '../Classes/*'
+    exclude: '../Classes/Domain/Model/*'
+
+  cache.content_cache:
+    class: TYPO3\CMS\Core\Cache\Frontend\FrontendInterface
+    factory: [ '@TYPO3\CMS\Core\Cache\CacheManager', 'getCache' ]
+    arguments: [ 'xmkesearchremote_cache' ]
+
+  Xima\XmKesearchRemote\Command\FetchContentCommand:
+    arguments:
+      $cache: '@cache.content_cache'
+    tags:
+      - name: 'console.command'
+        command: 'ke_search:fetch-remotes'
+        schedulable: true

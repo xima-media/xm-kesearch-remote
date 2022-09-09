@@ -14,13 +14,21 @@ class SitemapLink
 
     public int $fetchDate = 0;
 
-    public function __construct()
+    public string $sitemapUrl = '';
+
+    public function __construct(string $sitemapUrl)
     {
         $this->fetchDate = (new \DateTime())->getTimestamp();
+        $this->sitemapUrl = $sitemapUrl;
     }
 
     public function getCacheIdentifier(): string
     {
-        return md5($this->loc);
+        return md5($this->sitemapUrl) . '-' . md5($this->loc);
+    }
+
+    public function getFileContent(): string
+    {
+        return serialize($this) ?: '';
     }
 }

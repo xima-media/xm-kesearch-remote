@@ -10,6 +10,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Xima\XmKesearchRemote\Domain\Model\Dto\SitemapLink;
@@ -17,15 +18,31 @@ use Xima\XmKesearchRemote\Domain\Model\Dto\SitemapLink;
 class FetchContentCommand extends Command
 {
 
-    protected ExtensionConfiguration $extensionConfiguration;
+    protected string $cacheDir = '';
 
-    private LoggerInterface $logger;
-
-    public function __construct(ExtensionConfiguration $extensionConfiguration, LoggerInterface $logger, string $name = null)
-    {
+    /**
+     * @throws \TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException
+     * @throws \TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException
+     * @throws \Exception
+     */
+    public function __construct(
+        ExtensionConfiguration $extensionConfiguration,
+        string $name = null
+    ) {
         parent::__construct($name);
-        $this->extensionConfiguration = $extensionConfiguration;
-        $this->logger = $logger;
+
+        $cacheDirSetting = $extensionConfiguration->get('xm_kesearch_remote', 'cache_dir');
+        $cacheDirPath = realpath(Environment::getPublicPath() . '/' . $cacheDirSetting);
+        if (!is_string($cacheDirPath)) {
+            throw new \Exception('Not a valid cache dir "' . $cacheDirPath . '"', 1662710676);
+        }
+        if ($cacheDirPath && !is_dir($cacheDirPath)) {
+            mkdir($cacheDirPath);
+        }
+        if (!is_writable($cacheDirPath)) {
+            throw new \Exception('Cache dir "' . $cacheDirPath . '" is not writable', 1662710675);
+        }
+        $this->cacheDir = $cacheDirPath;
     }
 
     protected function configure(): void
@@ -44,10 +61,10 @@ class FetchContentCommand extends Command
 
         foreach ($sitemapConfigs as $config) {
             $xml = $this->fetchRemoteSitemap($config['tx_xmkesearchremote_sitemap']);
-            $links = $this->convertXmlToLinks($xml);
+            $links = $this->convertXmlToLinks($xml, $config['tx_xmkesearchremote_sitemap']);
             $links = $this->filterLinksByFileTypes($links);
-            $links = $this->filterByCache($links);
-            $this->fetchLinkContent($links, $config['tx_xmkesearchremote_filter']);
+            $links = $this->filterLinksByCache($links);
+            $this->fetchAndPersistLinks($links, $config['tx_xmkesearchremote_filter']);
         }
 
         return Command::SUCCESS;
@@ -56,7 +73,7 @@ class FetchContentCommand extends Command
     /**
      * @param SitemapLink[] $links
      */
-    protected function fetchLinkContent(array $links, string $filter = 'body'): void
+    protected function fetchAndPersistLinks(array $links, string $filter = 'body'): void
     {
         $client = new Client(['verify' => false]);
         foreach ($links as $link) {
@@ -64,27 +81,43 @@ class FetchContentCommand extends Command
                 $response = $client->request('GET', $link->loc);
                 $dom = $response->getBody()->getContents();
                 $crawler = new Crawler($dom);
+                $crawler = $crawler->filter('head title');
+                $link->title = $crawler->html('');
+                $crawler = new Crawler($dom);
                 $crawler = $crawler->filter($filter);
                 $link->content = preg_replace('/\s*\R\s*/', ' ', (trim(strip_tags($crawler->html(''))))) ?? '';
-                $cacheIdentifier = $link->getCacheIdentifier();
-                $this->cache->set($cacheIdentifier, $link);
+                $this->persistLink($link);
             } catch (GuzzleException $e) {
             }
         }
+    }
+
+    protected function persistLink(SitemapLink $link): void
+    {
+        $filename = $this->cacheDir . '/' . $link->getCacheIdentifier();
+        $fileContent = $link->getFileContent();
+        file_put_contents($filename, $fileContent);
     }
 
     /**
      * @param SitemapLink[] $links
      * @return SitemapLink[]
      */
-    protected function filterByCache(array $links): array
+    protected function filterLinksByCache(array $links): array
     {
         $nowTimestamp = (new \DateTime())->getTimestamp();
 
-        foreach($links as $key => $link) {
-            $cacheIdentifier = $link->getCacheIdentifier();
-            $cachedLink = $this->cache->get($cacheIdentifier);
-            if ($cachedLink && $link->lastmod < $nowTimestamp) {
+        foreach ($links as $key => $link) {
+            $filename = realpath($this->cacheDir . '/' . $link->getCacheIdentifier()) ?: '';
+
+            if (!file_exists($filename)) {
+                continue;
+            }
+
+            $fileContent = file_get_contents($filename) ?: '';
+            $cachedLink = unserialize($fileContent);
+
+            if ($cachedLink instanceof SitemapLink && $link->lastmod < $nowTimestamp) {
                 unset($links[$key]);
             }
         }
@@ -108,7 +141,7 @@ class FetchContentCommand extends Command
      * @param string $xml
      * @return SitemapLink[]
      */
-    protected function convertXmlToLinks(string $xml): array
+    protected function convertXmlToLinks(string $xml, string $sitemapUrl): array
     {
         if (!$xml) {
             return [];
@@ -116,14 +149,12 @@ class FetchContentCommand extends Command
 
         $crawler = new Crawler($xml);
 
-        $links = $crawler->filter('url')->each(function (Crawler $parentCrawler) {
-            $link = new SitemapLink();
+        return $crawler->filter('url')->each(function (Crawler $parentCrawler) use ($sitemapUrl) {
+            $link = new SitemapLink($sitemapUrl);
             $link->loc = (string)$parentCrawler->children('loc')->getNode(0)?->nodeValue ?: '';
             $link->lastmod = intval($parentCrawler->children('lastmod')->getNode(0)?->nodeValue ?: 0);
             return $link;
         });
-
-        return $links;
     }
 
     protected function fetchRemoteSitemap(string $sitemapUrl): string

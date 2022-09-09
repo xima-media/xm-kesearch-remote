@@ -1,0 +1,2 @@
+# cat=basic/enable; type=string; label=Path of the dir to store remote site content
+cache_dir =

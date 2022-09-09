@@ -10,6 +10,8 @@ class SitemapLink
 
     public string $content = '';
 
+    public string $title = '';
+
     public int $fetchDate = 0;
 
     public function __construct()

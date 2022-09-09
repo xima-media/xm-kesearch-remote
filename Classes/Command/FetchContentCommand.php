@@ -4,23 +4,28 @@ namespace Xima\XmKesearchRemote\Command;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DomCrawler\Crawler;
-use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Xima\XmKesearchRemote\Domain\Model\Dto\SitemapLink;
 
 class FetchContentCommand extends Command
 {
-    protected FrontendInterface $cache;
 
-    public function __construct(FrontendInterface $cache, string $name = null)
+    protected ExtensionConfiguration $extensionConfiguration;
+
+    private LoggerInterface $logger;
+
+    public function __construct(ExtensionConfiguration $extensionConfiguration, LoggerInterface $logger, string $name = null)
     {
         parent::__construct($name);
-        $this->cache = $cache;
+        $this->extensionConfiguration = $extensionConfiguration;
+        $this->logger = $logger;
     }
 
     protected function configure(): void
@@ -35,7 +40,7 @@ class FetchContentCommand extends Command
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $sitemapConfigs = $this->getSitemapUrlsFromIndexerConfigurations();
+        $sitemapConfigs = $this->getSitemapConfigurationFromIndexerConfigurations();
 
         foreach ($sitemapConfigs as $config) {
             $xml = $this->fetchRemoteSitemap($config['tx_xmkesearchremote_sitemap']);
@@ -43,21 +48,9 @@ class FetchContentCommand extends Command
             $links = $this->filterLinksByFileTypes($links);
             $links = $this->filterByCache($links);
             $this->fetchLinkContent($links, $config['tx_xmkesearchremote_filter']);
-            $this->cacheLinks($links, $config['tx_xmkesearchremote_sitemap']);
         }
 
         return Command::SUCCESS;
-    }
-
-    /**
-     * @param SitemapLink[] $links
-     */
-    protected function cacheLinks(array $links, string $sitemap): void
-    {
-        foreach ($links as $link) {
-            $cacheIdentifier = $link->getCacheIdentifier();
-            $this->cache->set($cacheIdentifier, $link);
-        }
     }
 
     /**
@@ -73,6 +66,8 @@ class FetchContentCommand extends Command
                 $crawler = new Crawler($dom);
                 $crawler = $crawler->filter($filter);
                 $link->content = preg_replace('/\s*\R\s*/', ' ', (trim(strip_tags($crawler->html(''))))) ?? '';
+                $cacheIdentifier = $link->getCacheIdentifier();
+                $this->cache->set($cacheIdentifier, $link);
             } catch (GuzzleException $e) {
             }
         }
@@ -150,7 +145,7 @@ class FetchContentCommand extends Command
      * @throws \Doctrine\DBAL\DBALException
      * @throws \Doctrine\DBAL\Driver\Exception
      */
-    protected function getSitemapUrlsFromIndexerConfigurations(): array
+    protected function getSitemapConfigurationFromIndexerConfigurations(): array
     {
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('tx_kesearch_indexerconfig');
         $qb->setRestrictions($qb->getRestrictions()->removeAll());

@@ -6,19 +6,32 @@ use Psr\Log\LoggerInterface;
 use Tpwd\KeSearch\Indexer\IndexerRunner;
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use Xima\XmKesearchRemote\Domain\Model\Dto\SitemapLink;
 
 class RemoteIndexer
 {
-    protected ExtensionConfiguration $extensionConfiguration;
+    protected string $cacheDir = '';
 
     private LoggerInterface $logger;
 
-    public function __construct(ExtensionConfiguration $extensionConfiguration, LoggerInterface $logger)
+    public function __construct()
     {
-        $this->extensionConfiguration = $extensionConfiguration;
-        $this->logger = $logger;
+        $extensionConfiguration = GeneralUtility::makeInstance(ExtensionConfiguration::class);
+        $cacheDirSetting = $extensionConfiguration->get('xm_kesearch_remote', 'cache_dir');
+        $cacheDirPath = realpath(Environment::getPublicPath() . '/' . $cacheDirSetting);
+        if (!is_string($cacheDirPath)) {
+            throw new \Exception('Not a valid cache dir "' . $cacheDirPath . '"', 1662710676);
+        }
+        if ($cacheDirPath && !is_dir($cacheDirPath)) {
+            mkdir($cacheDirPath);
+        }
+        if (!is_writable($cacheDirPath)) {
+            throw new \Exception('Cache dir "' . $cacheDirPath . '" is not writable', 1662710675);
+        }
+        $this->cacheDir = $cacheDirPath;
     }
 
     /**
@@ -46,54 +59,57 @@ class RemoteIndexer
             return '';
         }
 
-        //$sitemaps = $this->getSitemapUrlsFromIndexerConfigurations();
-        //
-        //foreach ($sitemaps as $sitemap) {
-        //
-        //}
-        //
-        //$indexerObject->storeInIndex(
-        //    $indexerConfig['storagepid'], // storage PID
-        //    $title, // record title
-        //    'xmkesearchremote', // content type
-        //    $indexerConfig['targetpid'], // target PID: where is the single view?
-        //    $fullContent, // indexed content, includes the title (linebreak after title)
-        //    $tags, // tags for faceted search
-        //    $params, // typolink params for singleview
-        //    $teaser, // abstract; shown in result list if not empty
-        //    $event['sys_language_uid'], // language uid
-        //    $event['starttime'], // starttime
-        //    $event['endtime'], // endtime
-        //    $event['fe_group'], // fe_group
-        //    false, // debug only?
-        //    $additionalFields // additionalFields
-        //);
+        $links = $this->getCachedLinksBySitemapUrl($indexerConfig['tx_xmkesearchremote_sitemap']);
 
-        return '';
+        foreach ($links as $link) {
+
+            if (!trim($link->content)) {
+                continue;
+            }
+
+            $indexerObject->storeInIndex(
+                $indexerConfig['storagepid'], // storage PID
+                $link->getDisplayTitle(),
+                'xmkesearchremote', // content type
+                $link->loc, // target PID: where is the single view?
+                $link->content, // indexed content, includes the title (linebreak after title)
+                '#remote#', // tags for faceted search
+                '', // typolink params for singleview
+                '', // abstract; shown in result list if not empty
+                0, // language uid
+                0, // starttime
+                0, // endtime
+                '', // fe_group
+                false, // debug only?
+                [
+                    'orig_uid' => md5($link->loc)
+                ] // additionalFields
+            );
+        }
+
+        return 'Remote Indexer (' . $indexerConfig['title'] . '):' . count($links) . ' Elements have been indexed.</p>';
     }
 
     /**
-     * @return string[]
-     * @throws \Doctrine\DBAL\DBALException
-     * @throws \Doctrine\DBAL\Driver\Exception
+     * @param string $sitemapUrl
+     * @return \Xima\XmKesearchRemote\Domain\Model\Dto\SitemapLink[]
      */
-    protected function getSitemapUrlsFromIndexerConfigurations(): array
+    protected function getCachedLinksBySitemapUrl(string $sitemapUrl): array
     {
-        $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('tx_kesearch_indexerconfig');
-        $qb->setRestrictions($qb->getRestrictions()->removeAll());
-        $result = $qb->select('tx_xmkesearchremote_sitemap')
-            ->from('tx_kesearch_indexerconfig')
-            ->where($qb->expr()->neq('tx_xmkesearchremote_sitemap', $qb->createNamedParameter('', \PDO::PARAM_STR)))
-            ->execute();
+        $allFiles = scandir($this->cacheDir) ?: [];
+        $md5 = md5($sitemapUrl);
+        $filesOfSitemap = array_filter($allFiles, function ($filename) use ($md5) {
+            return str_starts_with($filename, $md5);
+        });
+        $sitemapLinks = [];
+        foreach ($filesOfSitemap as $filename) {
+            $fileContent = file_get_contents($this->cacheDir . '/' . $filename) ?: '';
+            $cachedLink = unserialize($fileContent);
 
-        if (is_int($result)) {
-            return [];
+            if ($cachedLink instanceof SitemapLink) {
+                $sitemapLinks[] = $cachedLink;
+            }
         }
-
-        $sitemaps = $result->fetchAllAssociative();
-
-        return array_map(function($sitemap) {
-            return $sitemap['tx_xmkesearchremote_sitemap'] ?? '';
-        }, $sitemaps);
+        return $sitemapLinks;
     }
 }

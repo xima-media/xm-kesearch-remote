@@ -31,4 +31,9 @@ class SitemapLink
     {
         return serialize($this) ?: '';
     }
+
+    public function getDisplayTitle(): string
+    {
+        return $this->title ?: $this->loc;
+    }
 }

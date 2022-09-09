@@ -7,8 +7,8 @@ $fields = [
         'displayCond' => 'FIELD:type:=:xmkesearchremote',
         'config' => [
             'type' => 'input',
-            'eval' => 'trim,required'
-        ]
+            'eval' => 'trim,required',
+        ],
     ],
     'tx_xmkesearchremote_filter' => [
         'exclude' => 0,
@@ -16,8 +16,8 @@ $fields = [
         'displayCond' => 'FIELD:type:=:xmkesearchremote',
         'config' => [
             'type' => 'input',
-            'eval' => 'trim'
-        ]
+            'eval' => 'trim',
+        ],
     ],
 ];
 

@@ -4,10 +4,8 @@ namespace Xima\XmKesearchRemote\Indexer;
 
 use Psr\Log\LoggerInterface;
 use Tpwd\KeSearch\Indexer\IndexerRunner;
-use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Core\Environment;
-use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Xima\XmKesearchRemote\Domain\Model\Dto\SitemapLink;
 
@@ -42,7 +40,7 @@ class RemoteIndexer
         $params['items'][] = [
             'Remote Site (xm_kesearch_remote)',
             'xmkesearchremote',
-            GeneralUtility::getFileAbsFileName('EXT:xm_kesearch_remote/Resources/Public/Icons/Extension.svg')
+            GeneralUtility::getFileAbsFileName('EXT:xm_kesearch_remote/Resources/Public/Icons/Extension.svg'),
         ];
     }
 
@@ -62,7 +60,6 @@ class RemoteIndexer
         $links = $this->getCachedLinksBySitemapUrl($indexerConfig['tx_xmkesearchremote_sitemap']);
 
         foreach ($links as $link) {
-
             if (!trim($link->content)) {
                 continue;
             }
@@ -82,7 +79,7 @@ class RemoteIndexer
                 '', // fe_group
                 false, // debug only?
                 [
-                    'orig_uid' => md5($link->loc)
+                    'orig_uid' => md5($link->loc),
                 ] // additionalFields
             );
         }

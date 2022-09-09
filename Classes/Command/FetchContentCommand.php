@@ -4,7 +4,6 @@ namespace Xima\XmKesearchRemote\Command;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -17,7 +16,6 @@ use Xima\XmKesearchRemote\Domain\Model\Dto\SitemapLink;
 
 class FetchContentCommand extends Command
 {
-
     protected string $cacheDir = '';
 
     /**
@@ -152,7 +150,7 @@ class FetchContentCommand extends Command
         return $crawler->filter('url')->each(function (Crawler $parentCrawler) use ($sitemapUrl) {
             $link = new SitemapLink($sitemapUrl);
             $link->loc = (string)$parentCrawler->children('loc')->getNode(0)?->nodeValue ?: '';
-            $link->lastmod = intval($parentCrawler->children('lastmod')->getNode(0)?->nodeValue ?: 0);
+            $link->lastmod = (int)($parentCrawler->children('lastmod')->getNode(0)?->nodeValue ?: 0);
             return $link;
         });
     }

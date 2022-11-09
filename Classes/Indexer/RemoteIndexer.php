@@ -58,6 +58,7 @@ class RemoteIndexer
         }
 
         $links = $this->getCachedLinksBySitemapUrl($indexerConfig['tx_xmkesearchremote_sitemap']);
+        $languageUid = $indexerConfig['tx_xmkesearchremote_language'] ?? 0;
 
         foreach ($links as $link) {
             if (!trim($link->content)) {
@@ -73,7 +74,7 @@ class RemoteIndexer
                 '#remote#', // tags for faceted search
                 '', // typolink params for singleview
                 '', // abstract; shown in result list if not empty
-                0, // language uid
+                $languageUid, // language uid
                 0, // starttime
                 0, // endtime
                 '', // fe_group

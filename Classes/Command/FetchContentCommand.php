@@ -11,6 +11,7 @@ use Symfony\Component\DomCrawler\Crawler;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Xima\XmKesearchRemote\Domain\Model\Dto\SitemapLink;
 
@@ -177,7 +178,7 @@ class FetchContentCommand extends Command
     protected function getSitemapConfigurationFromIndexerConfigurations(): array
     {
         $qb = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('tx_kesearch_indexerconfig');
-        $qb->setRestrictions($qb->getRestrictions()->removeAll());
+        $qb->setRestrictions($qb->getRestrictions()->removeAll()->add(new HiddenRestriction()));
         $result = $qb->select('tx_xmkesearchremote_sitemap', 'tx_xmkesearchremote_filter')
             ->from('tx_kesearch_indexerconfig')
             ->where($qb->expr()->neq('tx_xmkesearchremote_sitemap', $qb->createNamedParameter('', \PDO::PARAM_STR)))

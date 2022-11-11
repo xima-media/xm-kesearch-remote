@@ -21,12 +21,10 @@ $fields = [
     ],
     'tx_xmkesearchremote_language' => [
         'exclude' => 0,
-        'label' => 'Langauge UID',
+        'label' => 'LLL:EXT:core/Resources/Private/Language/Form/locallang_tabs.xlf:language',
         'displayCond' => 'FIELD:type:=:xmkesearchremote',
         'config' => [
-            'type' => 'input',
-            'eval' => 'int,trim',
-            'default' => 0,
+            'type' => 'language',
         ],
     ],
 ];

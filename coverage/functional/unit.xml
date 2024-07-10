@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="/var/www/html/phpunit.functional.xml" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="1.641671">
+    <testsuite name="functional" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="1.641671">
+      <testsuite name="Xima\XmKesearchRemote\Tests\Functional\Command\FetchContentCommandTest" file="/var/www/html/Tests/Functional/Command/FetchContentCommandTest.php" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="1.641671">
+        <testcase name="testFixtures" file="/var/www/html/Tests/Functional/Command/FetchContentCommandTest.php" line="18" class="Xima\XmKesearchRemote\Tests\Functional\Command\FetchContentCommandTest" classname="Xima.XmKesearchRemote.Tests.Functional.Command.FetchContentCommandTest" assertions="1" time="1.641671"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>

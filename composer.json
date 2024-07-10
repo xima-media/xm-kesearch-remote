@@ -13,6 +13,11 @@
 		"typo3/cms-core": "^11.0",
 		"tpwd/ke_search": "^4.5"
 	},
+	"require-dev": {
+		"friendsofphp/php-cs-fixer": "^3.12",
+		"saschaegerer/phpstan-typo3": "^1.8",
+		"symfony/translation": "*"
+	},
 	"extra": {
 		"typo3/cms": {
 			"extension-key": "xm_kesearch_remote"
@@ -22,5 +27,17 @@
 		"psr-4": {
 			"Xima\\XmKesearchRemote\\": "Classes"
 		}
+	},
+	"config": {
+		"sort-packages": true,
+		"allow-plugins": {
+			"typo3/cms-composer-installers": true,
+			"typo3/class-alias-loader": true
+		}
+	},
+	"scripts": {
+		"php:fixer": "php-cs-fixer --config=php-cs-fixer.php fix",
+		"php:stan": "phpstan --generate-baseline=phpstan-baseline.neon --allow-empty-baseline",
+		"xml:lint": "find . -name '*.xlf' ! -path './vendor/*' ! -path './var/*' ! -path './public/*' | xargs -r xmllint --schema vendor/symfony/translation/Resources/schemas/xliff-core-1.2-transitional.xsd --noout"
 	}
 }

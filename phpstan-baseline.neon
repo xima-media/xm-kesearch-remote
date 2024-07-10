@@ -1,0 +1,26 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Call to method children\\(\\) on an unknown class Symfony\\\\Component\\\\DomCrawler\\\\Crawler\\.$#"
+			count: 2
+			path: Classes/Command/FetchContentCommand.php
+
+		-
+			message: "#^Call to method filter\\(\\) on an unknown class Symfony\\\\Component\\\\DomCrawler\\\\Crawler\\.$#"
+			count: 3
+			path: Classes/Command/FetchContentCommand.php
+
+		-
+			message: "#^Instantiated class Symfony\\\\Component\\\\DomCrawler\\\\Crawler not found\\.$#"
+			count: 3
+			path: Classes/Command/FetchContentCommand.php
+
+		-
+			message: "#^Parameter \\$parentCrawler of anonymous function has invalid type Symfony\\\\Component\\\\DomCrawler\\\\Crawler\\.$#"
+			count: 1
+			path: Classes/Command/FetchContentCommand.php
+
+		-
+			message: "#^Property Xima\\\\XmKesearchRemote\\\\Indexer\\\\RemoteIndexer\\:\\:\\$logger is unused\\.$#"
+			count: 1
+			path: Classes/Indexer/RemoteIndexer.php

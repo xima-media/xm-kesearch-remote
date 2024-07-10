@@ -10,6 +10,8 @@
 		}
 	],
 	"require": {
+		"symfony/css-selector": "*",
+		"symfony/dom-crawler": "*",
 		"typo3/cms-core": "^11.0",
 		"tpwd/ke_search": "^4.5"
 	},
@@ -18,7 +20,8 @@
 		"friendsofphp/php-cs-fixer": "^3.12",
 		"helhum/typo3-console": "* || dev-issue/1169",
 		"saschaegerer/phpstan-typo3": "^1.8",
-		"symfony/translation": "*"
+		"symfony/translation": "*",
+		"typo3/testing-framework": "^7.0"
 	},
 	"extra": {
 		"typo3/cms": {
@@ -28,6 +31,11 @@
 	"autoload": {
 		"psr-4": {
 			"Xima\\XmKesearchRemote\\": "Classes"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"Xima\\XmKesearchRemote\\Tests\\": "Tests"
 		}
 	},
 	"config": {
@@ -41,6 +49,7 @@
 		"php:fixer": "php-cs-fixer --config=php-cs-fixer.php fix",
 		"php:stan": "phpstan --generate-baseline=phpstan-baseline.neon --allow-empty-baseline",
 		"xml:lint": "find . -name '*.xlf' ! -path './vendor/*' ! -path './var/*' ! -path './public/*' | xargs -r xmllint --schema vendor/symfony/translation/Resources/schemas/xliff-core-1.2-transitional.xsd --noout",
+		"test:functional": "phpunit -c phpunit.functional.xml --no-coverage",
 		"ci:test:unit": "XDEBUG_MODE=coverage && phpunit -c phpunit.unit.xml",
 		"ci:test:functional": "XDEBUG_MODE=coverage && phpunit -c phpunit.functional.xml",
 		"ci:test:acceptance": "XDEBUG_MODE=coverage && codecept run Acceptance --coverage --coverage-xml",

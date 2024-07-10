@@ -10,6 +10,8 @@
 		}
 	],
 	"require": {
+		"symfony/css-selector": "*",
+		"symfony/dom-crawler": "*",
 		"typo3/cms-core": "^11.0",
 		"tpwd/ke_search": "^4.5"
 	},

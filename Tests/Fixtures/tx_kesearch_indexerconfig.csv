@@ -1,0 +1,3 @@
+"tx_kesearch_indexerconfig",,,,,,,,,,
+,"uid","pid","title","storagepid","type","tx_xmkesearchremote_sitemap","tx_xmkesearchremote_filter","tx_xmkesearchremote_language",
+,1,2,"TestIndexer",2,"xmkesearchremote","https://xm-kesearch-remote.ddev.site/fileadmin/Fixtures/sitemap.xml","",-1,

@@ -2,10 +2,10 @@
 
 namespace Xima\XmKesearchRemote\Tests\Functional\Command;
 
+use Symfony\Component\Console\Tester\CommandTester;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 use Xima\XmKesearchRemote\Command\FetchContentCommand;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use Symfony\Component\Console\Tester\CommandTester;
 
 class FetchContentCommandTest extends FunctionalTestCase
 {
@@ -35,5 +35,4 @@ class FetchContentCommandTest extends FunctionalTestCase
         $command = new FetchContentCommand($extensionConfigurationMock);
         $this->commandTester = new CommandTester($command);
     }
-
 }

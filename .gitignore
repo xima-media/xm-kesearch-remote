@@ -1,3 +1,8 @@
+public/.htaccess
+public/index.php
+public/fileadmin
+public/typo3temp
 public/typo3
 public/typo3conf
+var
 vendor
